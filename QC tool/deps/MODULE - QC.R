@@ -139,14 +139,12 @@ Server_QcViewerMod <- function(id, appWd){
     QcReferenceDf_react <- reactiveVal(NULL)
     
     
-    
-    
     #Run tests and update tests reference object:
     observeEvent(input$Ui_Input_RunButton, {
       
       req(SelectedInputDf_react())
       
-      QcReferenceDf_react <- NULL
+      QcReferenceDf_react(NULL)
       
       shinyalert(
                 title = "Loading data and analysis...",
