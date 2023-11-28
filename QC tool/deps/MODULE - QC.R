@@ -26,12 +26,7 @@ Ui_QcViewerMod <- function(id){
       tabPanel("QC tests",
                
                uiOutput(ns("Ui_DynamicInput_InputDfs")),
-               
-               numericInput(ns("Ui_WeekOfTheYear"),
-                            "Insert the week of the year",
-                            value = 46,
-                            min = 1),
-               
+    
                actionButton(ns("Ui_Input_RunButton"),
                             "Run / refresh",
                             icon = icon("refresh")),
@@ -195,8 +190,7 @@ Server_QcViewerMod <- function(id, appWd){
       
       QcReferenceDf_react({
         
-        runQcTests(inputDf = SelectedInputDf_react(),
-                   weekNum = input$Ui_WeekOfTheYear #Add varying  parameters, such as dates, as arguments.
+        runQcTests(inputDf = SelectedInputDf_react() #Add varying  parameters, such as dates, as arguments.
                    )
         
         })
