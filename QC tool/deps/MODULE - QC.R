@@ -16,28 +16,69 @@ Ui_QcViewerMod <- function(id){
   
   ns <- NS(id)
 
-  tagList(  
+  tagList(
+    
+    
     fluidPage(
       titlePanel(textOutput(outputId = "Ui_Display_SelectedSurvey")),
-      h4("Quality Control Tests Viewer"),
+      h1("Quality Control Tests Viewer"),
       
       HTML("<hr>"),
       
       tabPanel("QC tests",
                
                uiOutput(ns("Ui_DynamicInput_InputDfs")),
-    
+               
+               
                actionButton(ns("Ui_Input_RunButton"),
                             "Run / refresh",
                             icon = icon("refresh")),
                
-               checkboxInput(ns("Ui_Input_ShowOnlyQcConcerns"),
-                             "Show only those QC results where there are concerns:"),
+               HTML("<hr>"),
                
+              span(h2("Test results"),
+                   style = "font-size: 25px; font-weight: bold;"),
+              
                br(),
-               br(),
-               uiOutput(ns("Ui_OutputDisplay_QcTestResults")),
-               shinyjs::useShinyjs()
+
+               
+              uiOutput(ns("Ui_OutputDisplay_QcTestResults")),
+              shinyjs::useShinyjs(),
+               
+              shinyjs::hidden(textOutput(ns("Ui_QcResultsUiRendered"))),
+               
+               
+               conditionalPanel(
+                 condition = sprintf("document.getElementById('%s').innerText == 'true'",
+                                     ns("Ui_QcResultsUiRendered")),
+                 
+                  div(style = paste("position:", "fixed;", "bottom: 0;",
+                                    "left: 0;",
+                                    "right: 0;",
+                                    "background-color: #f8f9fa;",
+                                    "border-top: 2px solid black;",
+                                    "padding: 10px;",
+                                    "z-index: 1000;",
+                                    "display: flex;",
+                                    "justify-content: center;",
+                                    "align-items: center;"),
+                      
+                      div(
+                        
+                        actionButton(ns("ExportSelectedTestDfs"), 
+                                     "Export selected QC test results as Excel workbook", 
+                                     style = "margin-right: 20px;"),
+                        
+                        style = "display: inline-block;"
+                        ),
+                      
+                      div(
+                        materialSwitch(ns("Ui_Input_ShowOnlyQcConcerns"), 
+                                     "Show only those QC results where there are concerns"),
+                        style = "margin-left: 20px; display: inline-block;"     
+                        )  
+                      )
+                 )
                )
       )
     )
@@ -138,13 +179,21 @@ Server_QcViewerMod <- function(id, appWd){
     
     QcReferenceDf_react <- reactiveVal(NULL)
     
+    QcResultsUiRendered_react <- reactiveVal(FALSE)
+    
+    #Exposure to UI
+    output$Ui_QcResultsUiRendered <- reactive({ QcResultsUiRendered_react() })
+    outputOptions(output, "Ui_QcResultsUiRendered", suspendWhenHidden = FALSE)
+    
     
     #Run tests and update tests reference object:
     observeEvent(input$Ui_Input_RunButton, {
       
-      req(SelectedInputDf_react())
-      
       QcReferenceDf_react(NULL)
+      
+      QcResultsUiRendered_react(FALSE)
+
+      req(SelectedInputDf_react())
       
       shinyalert(
                 title = "Loading data and analysis...",
@@ -206,30 +255,35 @@ Server_QcViewerMod <- function(id, appWd){
       req(QcReferenceDf_react())
       
         ui_list <- lapply(1:nrow(QcReferenceDf_react()), function(i){
-            tagList(
-                textOutput(outputId = ns(QcReferenceDf_react()$QcTest_DescUiId[i])),
-                
-                tags$br(id = ns(QcReferenceDf_react()$QcTest_HtmlBr1Id[i])),
-                
-                
-                uiOutput(outputId = ns(QcReferenceDf_react()$QcConcernsFound_StatusUiId[i])),
-                
-                DT::DTOutput(outputId = ns(QcReferenceDf_react()$QcTest_DtUiId[i])),
-                
-                actionButton(inputId = ns(QcReferenceDf_react()$ExportDfQcTest_UiId[i]),
-                             label = "Export as Excel workbook",
-                             icon = icon("table")),
-                            
-                tags$br(id = ns(QcReferenceDf_react()$QcTest_HtmlBr2Id[i])),
-                
-                tags$hr(id = ns(QcReferenceDf_react()$QcTest_HtmlHrId[i]))
-                
-
-                         
+          
+          
+          tagList(
+            span(textOutput(outputId = ns(QcReferenceDf_react()$QcTest_DescUiId[i])),
+                 style = "font-size: 20px; font-weight: bold;"),
+            
+            tags$br(id = ns(QcReferenceDf_react()$QcTest_HtmlBr1Id[i])),
+            
+            uiOutput(outputId = ns(QcReferenceDf_react()$QcConcernsFound_StatusUiId[i])),
+            
+            checkboxInput(inputId = ns(QcReferenceDf_react()$SelectDfForExport_UiId[i]),
+                          label = "Select to export with other tests in an Excel workbook"),
+            
+            
+            DT::DTOutput(outputId = ns(QcReferenceDf_react()$QcTest_DtUiId[i])),
+            
+            actionButton(inputId = ns(QcReferenceDf_react()$ExportDfQcTest_UiId[i]),
+                         label = "Export as Excel workbook",
+                         icon = icon("table")),
+            
+            tags$br(id = ns(QcReferenceDf_react()$QcTest_HtmlBr2Id[i])),
+            
+            tags$hr(id = ns(QcReferenceDf_react()$QcTest_HtmlHrId[i]))
+            
             )
+                  
+            
           
         })
-        
     
         do.call(tagList, ui_list)
         
@@ -271,7 +325,7 @@ Server_QcViewerMod <- function(id, appWd){
             })
             
             
-          
+      QcResultsUiRendered_react(TRUE)
                        
       closeAlert()
 
@@ -281,7 +335,7 @@ Server_QcViewerMod <- function(id, appWd){
         
       wb <- createWorkbook()
       
-      FocusSheetName <- paste("QC test focus", i)
+      FocusSheetName <- QcReferenceDf_react()$QcTestCode[i]
       
       
       addWorksheet(wb, FocusSheetName)
@@ -331,9 +385,81 @@ Server_QcViewerMod <- function(id, appWd){
     
   }
   )
+        
+ 
+        
     
 
 })
+    
+    
+   observeEvent(input$ExportSelectedTestDfs,{
+     
+     SelectDfForExport_UiIdVec <- 
+       QcReferenceDf_react()$SelectDfForExport_UiId[1:nrow(QcReferenceDf_react())]
+     
+     InfoDf_SelectDfForExport <- 
+       map2(
+         .x = map(SelectDfForExport_UiIdVec, ~input[[.]]),
+         .y = SelectDfForExport_UiIdVec,
+         ~ tibble(SelectDfForExport_UiVal = .x,
+                  SelectDfForExport_UiId = .y)
+         ) |>
+       bind_rows()
+     
+     QcReferenceDf_InfoForSelectDfExport <-
+       left_join(QcReferenceDf_react(),
+                 InfoDf_SelectDfForExport,
+                 by = "SelectDfForExport_UiId") |>
+       filter(SelectDfForExport_UiVal == TRUE)
+ 
+      wb <- createWorkbook()
+      
+      for(i in 1:nrow(QcReferenceDf_InfoForSelectDfExport)){
+        
+        QcSheetName <- QcReferenceDf_InfoForSelectDfExport$QcTestCode[i]
+        
+        addWorksheet(wb, QcSheetName)
+        
+        writeData(wb,
+                  QcSheetName,
+                  QcReferenceDf_InfoForSelectDfExport$Description[i],
+                  startCol = 1,
+                  startRow = 1)
+
+      writeDataTable(wb,
+                     QcSheetName,
+                     QcReferenceDf_InfoForSelectDfExport$QcTestDf[[i]], 
+                     startCol = 1,
+                     startRow = 3)
+      
+      }
+      
+      addWorksheet(wb, "All data")
+      
+      writeDataTable(wb, "All data", SelectedInputDf_react())
+      
+      InputFileNameWoExtension <- 
+        str_replace(input$Ui_Input_InputDf, ".xlsx", "")
+      
+      SysTimeForFileName <-
+        format(Sys.time(), "%Y-%m-%d_%H%M%S")
+      
+      saveWorkbook(wb,
+                   file = here(appWd,
+                               "2. Output",
+                               paste0(InputFileNameWoExtension,
+                                      "_", 
+                                      SysTimeForFileName, 
+                                      ".xlsx")
+                               ), 
+                   overwrite = FALSE)
+
+      
+   })
+      
+                 
+                 
 
     
     
@@ -355,6 +481,7 @@ Server_QcViewerMod <- function(id, appWd){
             shinyjs::hide(QcReferenceDf_NoQcConcerns$QcTest_HtmlBr2Id[i])
             shinyjs::hide(QcReferenceDf_NoQcConcerns$QcTest_HtmlHrId[i])
             shinyjs::hide(QcReferenceDf_NoQcConcerns$ExportDfQcTest_UiId[i])
+            shinyjs::hide(QcReferenceDf_NoQcConcerns$SelectDfForExport_UiId[i])
             
           })
           
@@ -367,6 +494,7 @@ Server_QcViewerMod <- function(id, appWd){
             shinyjs::show(QcReferenceDf_NoQcConcerns$QcTest_HtmlBr2Id[i])
             shinyjs::show(QcReferenceDf_NoQcConcerns$QcTest_HtmlHrId[i])
             shinyjs::show(QcReferenceDf_NoQcConcerns$ExportDfQcTest_UiId[i])
+            shinyjs::show(QcReferenceDf_NoQcConcerns$SelectDfForExport_UiId[i])
 
           })
         }
@@ -375,4 +503,3 @@ Server_QcViewerMod <- function(id, appWd){
     
     })}
   
-
