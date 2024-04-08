@@ -16,12 +16,14 @@ runQcTests <- function(inputDf){
         "QcTest_DescUiId",
         "QcTest_DtUiId",
         "QcTest_HtmlHrId",
-        "ExportDfQcTest_UiId")
+        "ExportDfQcTest_UiId",
+        "SelectDfForExport_UiId")
     
     QcReferenceDf <-
       # Initialize an empty tibble with the correct structure but no rows
         tibble(
           QcTestName = character(0),
+          QcTestCode = character(0), #Brief name pf max 31 characters
           Description = character(0),
           QcTestDf = list(),
           QcConcernsFound = logical(0),
@@ -29,7 +31,8 @@ runQcTests <- function(inputDf){
           QcTest_DescUiId = character(0),
           QcTest_DtUiId = character(0),
           QcTest_HtmlHrId = character(0),
-          ExportDfQcTest_UiId = character(0)
+          ExportDfQcTest_UiId = character(0),
+          SelectDfForExport_UiId = character(0)
       
     )
     
@@ -37,11 +40,15 @@ runQcTests <- function(inputDf){
 
   
 
-  addQcTestToRefDf <- function(qcTestDf, qcTestDesc, currentRefObj = QcReferenceDf){
+  addQcTestToRefDf <- function(qcTestDf, qcTestDesc, qcTestCode, currentRefObj = QcReferenceDf){
     
     #Names of dataframes must end with _Qc
     QcTestName <- rlang::as_string(substitute(qcTestDf)) |> 
       str_extract("^.+(?=_Qc$)")
+    
+    
+    if(nchar(qcTestCode) > 31){stop("User-assigned QC test code is too long.")}
+    
     
     if(nrow(qcTestDf) == 0){
       AnythingToReport <- FALSE
@@ -56,9 +63,11 @@ runQcTests <- function(inputDf){
     QcTest_HtmlBr1Id <- paste0(QcTestName, "HtmlHBr1Id")
     QcTest_HtmlBr2Id <- paste0(QcTestName, "HtmlHBr2Id")
     ExportDfQcTest_UiId <- paste0(QcTestName, "_Export")
+    SelectDfForExport_UiId <- paste0(QcTestName, "_SelectForExport")
     
-    new_entry <- tibble(
+    newEntry <- tibble(
       QcTestName = QcTestName,
+      QcTestCode = qcTestCode,
       Description = qcTestDesc,
       QcTestDf = list(qcTestDf),
       QcConcernsFound = AnythingToReport,
@@ -68,20 +77,17 @@ runQcTests <- function(inputDf){
       QcTest_HtmlHrId = QcTest_HtmlHrId,
       QcTest_HtmlBr1Id = QcTest_HtmlBr1Id,
       QcTest_HtmlBr2Id = QcTest_HtmlBr2Id,
-      ExportDfQcTest_UiId = ExportDfQcTest_UiId
+      ExportDfQcTest_UiId = ExportDfQcTest_UiId,
+      SelectDfForExport_UiId = SelectDfForExport_UiId
     )
     
-    updatedRefObj <- bind_rows(currentRefObj, new_entry)
+    updatedRefObj <- bind_rows(currentRefObj, newEntry)
+    
     return(updatedRefObj)
   }
 
-  
-  
-  
-  
-####Code to create the QC tests below####
-  
-  
+
+                            
 #####1. Check whether assessment and survey times align in terms of date (rather than date-time)#####
   
   StartingDateAlignment_Qc <-
@@ -95,12 +101,14 @@ runQcTests <- function(inputDf){
                      qcTestDesc = "Are assessment dates and survey times misaligned date-wise?")
     
   
-  
+
+
 
 ####End of QC tests code####
   return(QcReferenceDf)
   
 }
+
 
  
 
