@@ -1,4 +1,4 @@
-# Data-QC-ShinyViewer
+# Data Quality Control Viewer
  
 This is an RShiny application designed to support interactivity with quality control checks.
 
