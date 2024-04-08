@@ -1,20 +1,30 @@
-library(shiny)
-library(here)
-library(readxl)
-library(stringr)
-library(dplyr)
-library(purrr)
-library(rlang)
-library(openxlsx)
-library(shiny)
-library(shinyalert)
-library(here)
-library(readxl)
-library(stringr)
-library(dplyr)
-library(purrr)
-library(rlang)
-library(rjson)
+# Define the list of packages to use
+Packages <- c(
+      "shiny",
+      "here",
+      "readxl",
+      "stringr",
+      "dplyr",
+      "purrr",
+      "rlang",
+      "openxlsx",
+      "shinyalert",
+      "rjson",
+      "shinyWidgets",
+      "lubridate",
+      "tidyr"
+    )
+
+# Check which packages are not installed and install them
+installed_packages <- Packages %in% rownames(installed.packages())
+if (any(!installed_packages)) {
+  install.packages(packages[!installed_packages])
+}
+
+# Load the packages without explicitly calling library for each one
+invisible(lapply(Packages, library, character.only = TRUE))
+
+
 
 
              
