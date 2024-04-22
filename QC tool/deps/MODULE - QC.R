@@ -125,7 +125,7 @@ Server_QcViewerMod <- function(id, appWd){
       
       InputXlsx_reactVals$FileNames <- 
            list.files(FilePath_InputDataFolder_react(),
-                      pattern = "^.+\\..+$")
+                      pattern = "^[^~].+\\..+$")
       
       InputXlsx_reactVals$FileNames
       })
