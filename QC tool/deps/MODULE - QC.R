@@ -78,8 +78,15 @@ Ui_QcViewerMod <- function(id){
                         style = "margin-left: 20px; display: inline-block;"     
                         )  
                       )
-                 )
-               )
+                 ),
+              
+              # These line breaks prevent the conditional panel above
+              # from obscuring any of the UI for teach QC test.
+              br(),
+              br(),
+              br(),
+              br()
+              )
       )
     )
 }   
@@ -254,7 +261,7 @@ Server_QcViewerMod <- function(id, appWd){
       
       req(QcReferenceDf_react())
       
-        ui_list <- lapply(1:nrow(QcReferenceDf_react()), function(i){
+        UiList <- lapply(1:nrow(QcReferenceDf_react()), function(i){
           
           
           tagList(
@@ -284,8 +291,9 @@ Server_QcViewerMod <- function(id, appWd){
             
           
         })
+
     
-        do.call(tagList, ui_list)
+        do.call(tagList, UiList)
         
         
         
@@ -307,7 +315,7 @@ Server_QcViewerMod <- function(id, appWd){
             })
             
             
-            #Status message
+            # Status message
             output[[QcReferenceDf_react()$QcConcernsFound_StatusUiId[i]]] <- renderUI({
                 
     
@@ -323,6 +331,7 @@ Server_QcViewerMod <- function(id, appWd){
             output[[QcReferenceDf_react()$QcTest_DtUiId[i]]] <- DT::renderDT({
                 return(QcReferenceDf_react()$QcTestDf[[i]])
             })
+            
             
             
       QcResultsUiRendered_react(TRUE)
