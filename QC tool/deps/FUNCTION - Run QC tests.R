@@ -23,7 +23,7 @@ runQcTests <- function(inputDf){
       # Initialize an empty tibble with the correct structure but no rows
         tibble(
           QcTestName = character(0),
-          QcTestCode = character(0), #Brief name pf max 31 characters
+          QcTestCode = character(0), #Brief name of max 31 characters
           Description = character(0),
           QcTestDf = list(),
           QcConcernsFound = logical(0),
@@ -88,17 +88,34 @@ runQcTests <- function(inputDf){
 
 
                             
-#####1. Check whether assessment and survey times align in terms of date (rather than date-time)#####
+#####1. Check whether cyl is greater than 6 #####
   
-  StartingDateAlignment_Qc <-
+  CylMoreThanSix_Qc <-
     inputDf |>
-    filter(mdy(assessmentDate) != as_date(mdy_hms(surveyTime))) |>
-    select(Response_ID, assessmentDate, surveyTime)
+    filter(cyl > 6) |>
+    select(car_name, cyl)
     
  
   QcReferenceDf <- 
-    addQcTestToRefDf(qcTestDf = StartingDateAlignment_Qc,
-                     qcTestDesc = "Are assessment dates and survey times misaligned date-wise?")
+    addQcTestToRefDf(qcTestDf = CylMoreThanSix_Qc,
+                     qcTestDesc = "Is cyl greater than 6?",
+                     qcTestCode = "CylMoreThanSix")
+    
+  
+
+                            
+#####2. Check whether drat is less than wt#####
+  
+  DratLessThanCyl_Qc <-
+    inputDf |>
+    filter(drat < cyl) |>
+    select(car_name, drat, cyl)
+    
+ 
+  QcReferenceDf <- 
+    addQcTestToRefDf(qcTestDf = DratLessThanCyl_Qc,
+                     qcTestDesc = "Checking whether drat is less than wt",
+                     qcTestCode = "DratLessThanWt")
     
   
 
